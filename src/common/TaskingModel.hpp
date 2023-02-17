@@ -283,4 +283,3 @@ private:
 } // namespace tasycl
 
 #endif // TASKING_MODEL_HPP
-

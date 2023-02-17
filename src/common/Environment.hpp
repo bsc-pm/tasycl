@@ -38,8 +38,7 @@ namespace tasycl
 
 		//! \brief Initialize the environment of TASYCL
 		//!
-		//! This function should be called after a successful call to
-		//! the original cuInit function
+		//! This function should be called at the beginning of the program.
 		static void initialize()
 		{
 			TaskingModel::initialize();
@@ -73,7 +72,6 @@ namespace tasycl
 			RequestManager::checkRequests();
 		}
 	};
-
 } // namespace tasycl
 
 #endif // ENVIRONMENT_HPP
