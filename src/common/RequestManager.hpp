@@ -163,7 +163,8 @@ public:
             eret = request._event.get_info<sycl::info::event::command_execution_status>();
             if (eret != sycl::info::event_command_status::complete &&
                 eret != sycl::info::event_command_status::running &&
-                eret != sycl::info::event_command_status::submitted) {
+                eret != sycl::info::event_command_status::submitted  &&
+                (int)eret != 3 /* FIX WHILE https://github.com/intel/llvm/issues/9099 IS FIXED */) {
                 ErrorHandler::fail("Failed in event.get_info<sycl::info::event::command_execution_status>()");
             } else if (eret == sycl::info::event_command_status::complete) {
                 assert(request._eventCounter != nullptr);
