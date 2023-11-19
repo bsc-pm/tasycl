@@ -1,7 +1,7 @@
 /*
 	This file is part of Task-Aware SYCL and is licensed under the terms contained in the COPYING and COPYING.LESSER files.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cstdio>
@@ -13,7 +13,7 @@
 
 namespace tasycl {
 
-TaskingModel::polling_handle_t Environment::_pollingHandle;
+TaskingModel::PollingInstance *Environment::_pollingInstance;
 
 EnvironmentVariable<uint64_t> Environment::_pollingFrequency("TASYCL_POLLING_FREQUENCY", 500);
 

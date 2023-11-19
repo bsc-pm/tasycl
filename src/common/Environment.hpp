@@ -1,7 +1,7 @@
 /*
 	This file is part of Task-Aware SYCL and is licensed under the terms contained in the COPYING and COPYING.LESSER files.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef ENVIRONMENT_HPP
@@ -19,9 +19,9 @@ namespace tasycl
 	class Environment
 	{
 	private:
-		//! The handle to the polling instance that periodically checks
-		//! the completion of the TASYCL requests and events
-		static TaskingModel::polling_handle_t _pollingHandle;
+	//! The handle to the polling instance that periodically checks
+	//! the completion of the TACUDA requests and events
+	static TaskingModel::PollingInstance *_pollingInstance;
 
 		//! Determine the polling frequency when the TASYCL polling is
 		//! implemented with tasks that are paused periodically. That is
@@ -45,8 +45,8 @@ namespace tasycl
 
 			Allocator<Request>::initialize();
 
-			assert(!_pollingHandle);
-			_pollingHandle = TaskingModel::registerPolling("TASYCL", Environment::polling, nullptr, _pollingFrequency);
+			assert(!_pollingInstance);
+			_pollingInstance = TaskingModel::registerPolling("TASYCL", Environment::polling, nullptr, _pollingFrequency);
 		}
 
 		//! \brief Finalize the environment of TASYCL
@@ -55,7 +55,7 @@ namespace tasycl
 		//! the program.
 		static void finalize()
 		{
-			TaskingModel::unregisterPolling(_pollingHandle);
+			TaskingModel::unregisterPolling(_pollingInstance);
 
 			Allocator<Request>::finalize();
 		}
