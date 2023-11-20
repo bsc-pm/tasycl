@@ -3,7 +3,7 @@
 
 #	This file is part of Task-Aware SYCL and is licensed under the terms contained in the COPYING and COPYING.LESSER files.
 #
-#	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 
 AC_PREREQ([2.69])
 AC_INIT([tasycl], [1.0.0], [pm-tools@bsc.es])

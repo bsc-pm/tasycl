@@ -1,7 +1,7 @@
 /*
 	This file is part of Task-Aware SYCL and is licensed under the terms contained in the COPYING and COPYING.LESSER files.
 
-	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef REQUEST_MANAGER_HPP
@@ -27,14 +27,14 @@ struct Request {
 	//! The event of the request
     sycl::event _event;
 
-	//! The event counter of the calling task
-	void *_eventCounter;
+	//! Calling task
+	TaskingModel::task_handle_t _taskHandle;
 
 	//! Support for Boost intrusive lists
 	links_t _listLinks;
 
 	inline Request() :
-		_eventCounter(nullptr)
+		_taskHandle(nullptr)
 	{
 	}
 };
@@ -96,12 +96,12 @@ public:
 
 		// Bind the request to the calling task if needed
 		if (bind) {
-			void *counter = TaskingModel::getCurrentEventCounter();
-			assert(counter != nullptr);
+			TaskingModel::task_handle_t task = TaskingModel::getCurrentTask();
+			assert(task != nullptr);
 
-			request->_eventCounter = counter;
+			request->_taskHandle = task;
 
-			TaskingModel::increaseCurrentTaskEventCounter(counter, 1);
+			TaskingModel::increaseCurrentTaskEvents(task, 1);
 
 			RequestManager::addRequest(request);
 		}
@@ -111,14 +111,13 @@ public:
 	static void processRequest(Request *request)
 	{
 		assert(request != nullptr);
-		assert(request->_eventCounter == nullptr);
 
-		void *counter = TaskingModel::getCurrentEventCounter();
-		assert(counter != nullptr);
+		TaskingModel::task_handle_t task = TaskingModel::getCurrentTask();
+		assert(task != nullptr);
 
-		request->_eventCounter = counter;
+		request->_taskHandle = task;
 
-		TaskingModel::increaseCurrentTaskEventCounter(counter, 1);
+		TaskingModel::increaseCurrentTaskEvents(task, 1);
 
 		addRequest(request);
 	}
@@ -128,18 +127,17 @@ public:
 		assert(count > 0);
 		assert(requests != nullptr);
 
-		void *counter = TaskingModel::getCurrentEventCounter();
-		assert(counter != nullptr);
+		TaskingModel::task_handle_t task = TaskingModel::getCurrentTask();
 
 		size_t nactive = 0;
 		for (size_t r = 0; r < count; ++r) {
 			if (requests[r] != nullptr) {
-				assert(requests[r]->_eventCounter == nullptr);
-				requests[r]->_eventCounter = counter;
+				assert(requests[r]->_taskHandle == nullptr);
+				requests[r]->_taskHandle = task;
 				++nactive;
 			}
 		}
-		TaskingModel::increaseCurrentTaskEventCounter(counter, nactive);
+		TaskingModel::increaseCurrentTaskEvents(task, nactive);
 
 		addRequests(count, requests);
 	}
@@ -167,8 +165,8 @@ public:
                 (int)eret != 3 /* FIX WHILE https://github.com/intel/llvm/issues/9099 IS FIXED */) {
                 ErrorHandler::fail("Failed in event.get_info<sycl::info::event::command_execution_status>()");
             } else if (eret == sycl::info::event_command_status::complete) {
-                assert(request._eventCounter != nullptr);
-				TaskingModel::decreaseTaskEventCounter(request._eventCounter, 1);
+                assert(request._taskHandle != nullptr);
+				TaskingModel::decreaseTaskEvents(request._taskHandle, 1);
 
 				Allocator<Request>::free(&request);
 

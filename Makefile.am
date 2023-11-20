@@ -1,6 +1,6 @@
 #	This file is part of Task-Aware SYCL and is licensed under the terms contained in the COPYING and COPYING.LESSER files.
 #
-#	Copyright (C) 2022 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2022-2023 Barcelona Supercomputing Center (BSC)
 
 ACLOCAL_AMFLAGS=-I m4
 
@@ -32,11 +32,11 @@ common_sources = \
 
 noinst_HEADERS = \
  src/common/Allocator.hpp \
+ src/common/ALPI.hpp \
  src/common/Environment.hpp \
  src/common/QueuePool.hpp \
  src/common/RequestManager.hpp \
  src/common/Symbol.hpp \
- src/common/TaskingModelAPI.hpp \
  src/common/TaskingModel.hpp \
  src/common/util/EnvironmentVariable.hpp \
  src/common/util/ErrorHandler.hpp \

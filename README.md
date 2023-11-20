@@ -48,4 +48,15 @@ In order to install the TASYCL library, the main requirements are the following:
 - Automake, autoconf, libtool, make and a C and C++ compiler that supports C++17.
 - A SYCL implementation. TASYCL has been tested with OneAPI 2023.0.
 - Boost library 1.59 or greater.
-- OmpSs-2 (version 2022.11 or greater).
+- One of the following parallel task-based programming models (required when compiling a user application):
+	- [OmpSs-2](https://github.com/bsc-pm/ompss-2-releases) (version 2023.11 or greater)
+	- The derivative implementation of [LLVM/OpenMP](https://github.com/bsc-pm/llvm)
+
+### ALPI Tasking Interface
+
+The Task-Aware SYCL library relies on the [ALPI](https://gitlab.bsc.es/alpi/alpi) interface to communicate with
+the underlying tasking runtime system. This interface is internally used by TASYCL to spawn internal tasks, to
+block user tasks, or add external events to them.
+
+The required interface is ALPI 1.0 (or any compatible) and it is included in the [ALPI.hpp](src/common/ALPI.hpp)
+header. Any tasking runtime system can support this TASYCL library by providing support to this interface version.
