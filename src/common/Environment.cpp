@@ -13,7 +13,7 @@
 
 namespace tasycl {
 
-TaskingModel::PollingInstance *Environment::_pollingInstance;
+TaskingModel::PollingInfo *Environment::_pollingInfo;
 
 EnvironmentVariable<uint64_t> Environment::_pollingFrequency("TASYCL_POLLING_FREQUENCY", 500);
 

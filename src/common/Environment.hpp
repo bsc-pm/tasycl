@@ -19,9 +19,9 @@ namespace tasycl
 	class Environment
 	{
 	private:
-	//! The handle to the polling instance that periodically checks
+	//! The handle to the polling info struct that periodically checks
 	//! the completion of the TACUDA requests and events
-	static TaskingModel::PollingInstance *_pollingInstance;
+	static TaskingModel::PollingInfo *_pollingInfo;
 
 		//! Determine the polling frequency when the TASYCL polling is
 		//! implemented with tasks that are paused periodically. That is
@@ -45,8 +45,8 @@ namespace tasycl
 
 			Allocator<Request>::initialize();
 
-			assert(!_pollingInstance);
-			_pollingInstance = TaskingModel::registerPolling("TASYCL", Environment::polling, nullptr, _pollingFrequency);
+			assert(!_pollingInfo);
+			_pollingInfo = TaskingModel::registerPolling("TASYCL", Environment::polling, nullptr, _pollingFrequency);
 		}
 
 		//! \brief Finalize the environment of TASYCL
@@ -55,7 +55,7 @@ namespace tasycl
 		//! the program.
 		static void finalize()
 		{
-			TaskingModel::unregisterPolling(_pollingInstance);
+			TaskingModel::unregisterPolling(_pollingInfo);
 
 			Allocator<Request>::finalize();
 		}

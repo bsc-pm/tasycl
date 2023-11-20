@@ -34,18 +34,27 @@ public:
 	typedef struct alpi_task *task_handle_t;
 	typedef void (*polling_function_t)(void *args);
 
-	//! Structure that stores information regarding a polling instance
-	struct PollingInstance {
+	//! Internal structure to represent a polling info struct
+	struct PollingInfo {
 		std::string _name;
 		polling_function_t _function;
 		void *_args;
-		uint64_t _pollingFrequency;
+		uint64_t _frequency;
 		std::atomic<bool> _mustFinish;
 		std::atomic<bool> _finished;
 
-		PollingInstance(const std::string &name, polling_function_t function, void *args, uint64_t pollingFrequency) :
-			_name(name), _function(function), _args(args), _pollingFrequency(pollingFrequency),
-			_mustFinish(false), _finished(false)
+		inline PollingInfo(
+			const std::string &name,
+			polling_function_t function,
+			void *args,
+			uint64_t frequency
+		) :
+			_name(name),
+			_function(function),
+			_args(args),
+			_frequency(frequency),
+			_mustFinish(false),
+			_finished(false)
 		{
 		}
 	};
@@ -79,62 +88,63 @@ public:
 	//! \brief Initialize and load the symbols of the tasking model
 	static void initialize();
 
-	//! \brief Register a polling instance
+	//! \brief Register a polling info struct
 	//!
-	//! This function registers a polling instance, which will call the
+	//! This function registers a polling info struct, which will call the
 	//! specified function with its argument periodically. The polling
 	//! function must follow the type polling_function_t
 	//!
-	//! \param name The name of the polling instance
+	//! \param name The name of the polling info struct
 	//! \param function The function to be called periodically
 	//! \param args The arguments of the function
-	//!
-	//! \returns A polling handle to unregister the instance once
+	//! \param frequency The frequency at which to call the function
+	//!	
+	//! \returns A polling handle to unregister the info struct once
 	//!          the polling should finish
-	static PollingInstance *registerPolling(
+	static PollingInfo *registerPolling(
 		const std::string &name,
 		polling_function_t function,
 		void *args,
-		uint64_t pollingFrequency
+		uint64_t frequency
 	) {
-		PollingInstance *instance = new PollingInstance(name, function, args, pollingFrequency);
-		assert(instance != nullptr);
+		PollingInfo *info = new PollingInfo(name, function, args, frequency);
+		assert(info != nullptr);
 
 		// Spawn a task that will do the periodic polling
 		int err = _alpi_task_spawn(
-			genericPolling, static_cast<void *>(instance),
-			genericCompleted, static_cast<void *>(instance),
+			genericPolling, static_cast<void *>(info),
+			genericCompleted, static_cast<void *>(info),
 			name.data(), nullptr);
 		if (err)
 			ErrorHandler::fail("Failed alpi_task_spawn: ", getError(err));
 
-		return instance;
+		return info;
 	}
 
-	//! \brief Unregister a polling instance
+	//! \brief Unregister a polling info struct
 	//!
-	//! This function unregisters a polling instance, which will
+	//! This function unregisters a polling info struct, which will
 	//! prevent the associated polling function from being further
 	//! called. The polling function is guaranteed to not be called
 	//! after returing from this function. Note that other registered
-	//! polling instances may continue calling that function
+	//! polling info structs may continue calling that function
 	//!
-	//! \param handle The handle of the polling instance to unregister
-	static void unregisterPolling(PollingInstance *instance)
+	//! \param handle The handle of the polling info struct to unregister
+	static void unregisterPolling(PollingInfo *info)
 	{
-		assert(instance != nullptr);
+		assert(info != nullptr);
 
 		// Notify that the polling should stop
-		instance->_mustFinish = true;
+		info->_mustFinish = true;
 
 		// Wait until the spawned task completes
-		while (!instance->_finished) {
+		while (!info->_finished) {
 			// Task yield to avoid consuming a CPU for waiting. Otherwise, in
 			// the case of a single CPU, the execution could hang
-			if (int err = _alpi_task_waitfor_ns(1000000, nullptr))
+			if (int err = _alpi_task_waitfor_ns(1000, nullptr))
 				ErrorHandler::fail("Failed alpi_task_waitfor_ns: ", getError(err));
 		}
-		delete instance;
+		delete info;
 	}
 
 	//! \brief Get the current task handle
@@ -195,39 +205,39 @@ public:
 private:
 	//! \brief Wrapper function called by all polling tasks
 	//!
-	//! This function is called once for each polling instance and is
+	//! This function is called once for each polling info struct and is
 	//! executed by a task. This function runs on a loop until the
-	//! instance is unregistered. The body of the loop performs a call
-	//! to the polling instance function and then blocks the task for
+	//! info struct is unregistered. The body of the loop performs a call
+	//! to the polling info struct function and then blocks the task for
 	//! a time specified by that function as its return value
 	//!
-	//! \param args An opaque pointer to the polling instance
+	//! \param args An opaque pointer to the polling info struct
 	static void genericPolling(void *args)
 	{
-		PollingInstance *instance = static_cast<PollingInstance *>(args);
-		assert(instance != nullptr);
+		PollingInfo *info = static_cast<PollingInfo *>(args);
+		assert(info != nullptr);
 
 		// Poll until it is externally notified to stop
-		while (!instance->_mustFinish) {
+		while (!info->_mustFinish) {
 			// Call the actual polling function
-			instance->_function(instance->_args);
+			info->_function(info->_args);
 
 			// Pause the polling task for some microseconds
-			if (int err = _alpi_task_waitfor_ns(instance->_pollingFrequency * 1000, nullptr))
+			if (int err = _alpi_task_waitfor_ns(info->_frequency, nullptr))
 				ErrorHandler::fail("Failed task_waitfor_ns: ", getError(err));
 		}
 	}
 
 	//! \brief Function called by a polling task is completed
 	//!
-	//! \param args An opaque pointer to the polling instance
+	//! \param args An opaque pointer to the polling info
 	static void genericCompleted(void *args)
 	{
-		PollingInstance *instance = static_cast<PollingInstance *>(args);
-		assert(instance != nullptr);
+		PollingInfo *info = static_cast<PollingInfo *>(args);
+		assert(info != nullptr);
 
 		// The polling task has completed
-		instance->_finished = true;
+		info->_finished = true;
 	}
 
 	//! \brief Get the string describing the alpi error
