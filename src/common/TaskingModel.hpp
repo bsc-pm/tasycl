@@ -98,6 +98,7 @@ public:
 	//! \param function The function to be called periodically
 	//! \param args The arguments of the function
 	//! \param frequency The frequency at which to call the function
+	//!                  in microseconds
 	//!	
 	//! \returns A polling handle to unregister the info struct once
 	//!          the polling should finish

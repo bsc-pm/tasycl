@@ -54,8 +54,6 @@ public:
 		_symbol = (SymbolTy *) dlsym(RTLD_DEFAULT, _name);
 		if (_symbol == nullptr)
 			ErrorHandler::fail("Could not find symbol ", _name);
-
-		return;
 	}
 
 	//! \brief Indicate whether the symbol is loaded
